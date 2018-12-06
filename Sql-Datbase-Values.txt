@@ -1,0 +1,10 @@
+Highscore
+--MaxScore = int(100)
+--MinScore = int(100)
+--note = varchar(5)
+--FK_Username = varchar(3)
+--FOREIGN KEY (FK_Username) REFERENCES User(Username)
+
+User
+--Username = primary key varchar(3) not null
+--password = varchar(20) not null
