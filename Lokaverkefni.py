@@ -4,6 +4,7 @@ import random
 import pygame.freetype
 
 pygame.init()
+pygame.font.init()
 
 ###Billy movement sprites###
 billyLeft = pygame.image.load('playerPixelModel-left.png')
@@ -17,14 +18,22 @@ GunImg5LoadedL = pygame.image.load('playerPixelModel-GunLeft5.png')
 ###Enemy sprites###
 zombieLoadedR = pygame.image.load('enemyPixelModel-right.png')
 zombieLoadedL = pygame.image.load('enemyPixelModel-left.png')
+###Bullet sprite###
+bulletLoaded = pygame.image.load('bulletPixelModel.png')
 
 height = 1000
-width = 1800
-
-mostUsedFont = pygame.freetype.Font('28 Days Later.ttf',30)
+width = 1600
 
 pressedKey = pygame.key.get_pressed()
 display = pygame.display.set_mode((width,height))
+
+fontName = pygame.font.match_font('arial')
+def text(sur,text,size,x,y):
+    font = pygame.font.Font(fontName, size)
+    surface = font.render(text, False,(0,0,0))
+    textRect = surface.get_rect()
+    textRect.midtop = (x,y)
+    sur.blit(surface, textRect)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -62,63 +71,90 @@ class Player(pygame.sprite.Sprite):
         if self.rect.y == 0:
             self.rect.y = self.rect.y + 50
 
+    def fire(self):
+        bullet = Gun(self.rect.centerx,self.rect.top)
+        sprites.add(bullet)
+        bullets.add(bullet)
+        randomlySelected = random.randint(1,5)
+        if randomlySelected == 1:
+            self.image = GunImg1LoadedL
+        elif randomlySelected == 2:
+            self.image = GunImg2LoadedL
+        elif randomlySelected == 3:
+            self.image = GunImg3LoadedL
+        elif randomlySelected == 4:
+            self.image = GunImg4LoadedL
+        elif randomlySelected == 5:
+            self.image = GunImg5LoadedL
 class Mob(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.image = zombieLoadedL
         self.rect = self.image.get_rect()
         self.speedx = 1
-        self.rect.y = random.randrange(25,875)
+        self.rect.y = random.randrange(0,height)
 
     def update(self):
         self.rect.x += self.speedx
-        print("Labba")
-        if self.rect.left > width +1:
-            print("Labba")
+        if self.rect.left > width:
+            self.rect.x = random.randrange(0,width)
             self.speedx = 1
-            self.rect.x = random.randrange(25,width)
 
-class Gun():
+class Gun(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = bulletLoaded
+        self.rect = self.image.get_rect()
+        self.rect.bottom = y
+        self.rect.centerx = x
+        self.speedx = -3
+    def update(self):
+        self.rect.x += self.speedx
+        if self.rect.bottom < 0:
+            self.kill()
 
-all_sprites = pygame.sprite.Group()
+class Menu:
+    def __init__(self):
+        self.image = pygame.Surface((height,width))
+sprites = pygame.sprite.Group()
 player = Player()
-zombie = Mob()
-all_sprites.add(player)
+sprites.add(player)
 
+bullets = pygame.sprite.Group()
+
+zombie = Mob()
 mobs = pygame.sprite.Group()
-for i in range(4):
+for i in range(10):
     m = Mob()
-    all_sprites.add(m)
+    sprites.add(m)
     mobs.add(m)
 
+score = 0
 Go = True
 while Go:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             Go = False
+        if event.type == pygame.MOUSEBUTTONUP:
+            player.fire()
+        if pressedKey[pygame.K_ESCAPE]:
+            Menu()
+    collisions = pygame.sprite.spritecollide(player,mobs,False)
+    if collisions:
+        Go = False
+    collisions = pygame.sprite.groupcollide(mobs,bullets,True,True)
+    for collision in collisions:
+        score = +1
+        m = Mob()
+        sprites.add(m)
+        mobs.add(m)
 
-    all_sprites.update()
+
+    sprites.update()
     mobs.update()
     display.fill((255,255,255))
-    all_sprites.draw(display)
-    #if pressedKey[pygame.K_ESCAPE]:
-       # mainMenu()
+    sprites.draw(display)
+    text(display,str(score),18,width/2,10)
     pygame.display.flip()
 
 pygame.quit()
-
-
-#def mainMenu():
-    #resume = mostUsedFont.render('Resume',False,(255,255,255))
-    #highscoreDisplay = mostUsedFont.render('Highscore',False,(255,255,255))
-
-    #runMainMenu = True
-    #escapeButtonOrResume = True
-    #while runMainMenu:
-    #    display.fill((0,0,0))
-    #    display.blit(resume,(width/2,700))
-    #    display.blit(highscoreDisplay,(width/2,400))
-    #    if pressedKey[pygame.K_ESCAPE]:
-    #        escapeButtonOrResume = False
-    #    if escapeButtonOrResume == False:
-    #        runMainMenu = False
